@@ -1,93 +1,75 @@
 // Home.js
 
-import { useEffect } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { fetchUsers } from '../actions/usersSlice'; // Update the path accordingly
-import { createQuestion } from '../actions/questionsSlice'; // Import the action accordingly
-import { _getQuestions } from '../_DATA' // Import the correct path
+import { useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchUsers } from "../actions/usersSlice"; // Update the path accordingly
+import { createQuestion, getQuestions } from "../actions/questionsSlice"; // Import the action accordingly
+import { _getQuestions } from "../_DATA"; // Import the correct path
+import QuestionCard from "./QuestionCard";
 
 const Home = () => {
   const dispatch = useDispatch();
   const users = useSelector((state) => state.users);
   const questions = useSelector((state) => state.questions); // Make sure you have a questions slice in your store
 
-  
+  const authUser = useSelector((state) => state.authSlice.user);
+  const currentUser = authUser.id;
+
+
   useEffect(() => {
-    const fetchData = async () => {
-      const usersData = await fetchUsers();
-      const questionsData = await _getQuestions();
+    dispatch(fetchUsers());
+    dispatch(getQuestions());
+  }, [dispatch,questions]);
 
-      dispatch(createQuestion(usersData));
-      dispatch(createQuestion(questionsData));
-    };
+  const categorizeQuestions = (currentUser, users, questions) => {
+    const userAnswers = users[currentUser]?.answers || {};
+    const newQuestions = {};
+    const oldQuestions = {};
 
-    fetchData();
-  }, [dispatch]);
+    Object.keys(questions).forEach((questionId) => {
+      if (questionId in userAnswers) {
+        oldQuestions[questionId] = questions[questionId];
+      } else {
+        newQuestions[questionId] = questions[questionId];
+      }
+    });
+
+    return { newQuestions, oldQuestions };
+  };
+
+  const { newQuestions, oldQuestions } = categorizeQuestions(
+    currentUser,
+    users,
+    questions
+  );
 
   return (
-    <div>
-      <h1>Users List</h1>
-      <ul>
-        {Object.keys(users).map((userId) => {
-          const user = users[userId];
+    <div
+      style={{ margin: 5, display: "flex", flexDirection: "column", gap: 20 }}
+    >
+      <h2>New Questions</h2>
+      <div style={{ display: "flex", flexDirection: "row", gap: 20 }}>
+        {Object.values(newQuestions).map((question) => (
+          <QuestionCard
+            key={question.id}
+            question={question}
+            users={users}
+            currentUser={currentUser}
+          />
+        ))}
+      </div>
 
-          return (
-            <li key={userId}>
-              <h2>Name: {user.name}</h2>
-
-              <div>
-                <h3>Unanswered Questions:</h3>
-                <ul>
-                  {user.questions.map((questionId) => {
-                    const question = questions[questionId];
-
-                    // Check if the question and its options are defined
-                    if (question && question.optionOne && question.optionTwo) {
-                      if (
-                        !question.optionOne.votes.includes(userId) &&
-                        !question.optionTwo.votes.includes(userId)
-                      ) {
-                        return (
-                          <li key={questionId}>
-                            {question.optionOne.text} or {question.optionTwo.text}
-                          </li>
-                        );
-                      }
-                    }
-
-                    return null;
-                  })}
-                </ul>
-              </div>
-
-              <div>
-                <h3>Answered Questions:</h3>
-                <ul>
-                  {user.questions.map((questionId) => {
-                    const question = questions[questionId];
-
-                    // Check if the question and its options are defined
-                    if (question && question.optionOne && question.optionTwo) {
-                      if (
-                        question.optionOne.votes.includes(userId) ||
-                        question.optionTwo.votes.includes(userId)
-                      ) {
-                        return (
-                          <li key={questionId}>
-                            You answered: {user.answers[questionId]}
-                          </li>
-                        );
-                      }
-                    }
-
-                    return null;
-                  })}
-                </ul>
-              </div>
-            </li>
-          );
-        })}
-      </ul>
+      <h2>Old Questions</h2>
+      <div style={{ display: "flex", flexDirection: "row", gap: 20 }}>
+        {Object.values(oldQuestions).map((question) => (
+          <QuestionCard
+            key={question.id}
+            question={question}
+            users={users}
+            currentUser={currentUser}
+          />
+        ))}
+      </div>
     </div>
   );
 };

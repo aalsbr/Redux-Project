@@ -30,9 +30,8 @@ const AddQuestion = () => {
       const newQuestion = await _saveQuestion({
         optionOneText: options.optionOneText,
         optionTwoText: options.optionTwoText,
-        author: authUser.id, // تغيير هنا
+        author: authUser, // تغيير هنا
       });
-
       dispatch(createQuestion(newQuestion));
 
       // يمكنك إعادة توجيه المستخدم إلى صفحة أخرى بعد إنشاء السؤال

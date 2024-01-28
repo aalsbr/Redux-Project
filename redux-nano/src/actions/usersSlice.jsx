@@ -17,8 +17,10 @@ export const { setUsers } = usersSlice.actions;
 // Thunk for fetching users asynchronously
 export const fetchUsers = () => async (dispatch) => {
   try {
+    console.log('Fetching users')
     const userData = await _getUsers();
-    dispatch(setUsers(userData));
+    dispatch(setUsers(userData)); // Dispatch the action to update the state
+    console.log(userData)
   } catch (error) {
     console.error('Error fetching users:', error);
   }
